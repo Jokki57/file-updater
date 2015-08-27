@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 using System.IO;
 
 namespace FileUpdater.Model {
-	class FileController {
+	public class FileController {
 		private const string SOURCE_ERROR = "Source file does not exist";
 
 		private BaseFile[] destinations;
 		private BaseFile source;
 		private FileSystemWatcher watcher;
+
+		internal FileInfo SourceFileInfo { get { return source.FileInfo; } }
 
 		//internal event EventHandler<String> FileDoesNotExist;
 
@@ -19,15 +21,36 @@ namespace FileUpdater.Model {
 			RegisterSource(sourcePath, destinationPath);
 		}
 
+		internal FileController(string sourcePath) {
+			RegisterSource(sourcePath);
+		}
+
 		internal FileController(BaseFile sourceFile, BaseFile destinationFile) {
 			RegisterPaths(sourceFile, destinationFile);
+		}
+
+		internal void AddDestionationFile(string destinationPath) {
+			BaseFile dest = new BaseFile(destinationPath);
+			if (!dest.FileInfo.Exists) {
+				//TODO: here must be notification message
+				throw new FileNotFoundException("Destination file does not find");
+			}
+			destinations[destinations.Length] = dest;
+		}
+
+		internal void AddDestionationFile(BaseFile destinationFile) {
+			if (!destinationFile.FileInfo.Exists) {
+				//TODO: here must be notification message
+				throw new FileNotFoundException("Destination file does not find");
+			}
+			destinations[destinations.Length] = destinationFile;
 		}
 
 		private void RegisterSource(string sourcePath, string destinationPath = "") {
 			source = new BaseFile(sourcePath);
 			if (!source.FileInfo.Exists) {
 				//TODO: here must be notification message
-				throw new FileNotFoundException("Source file did not find");
+				throw new FileNotFoundException("Source file does not find");
 			}
 			CreateWatcher(source.FileInfo.DirectoryName, source.FileInfo.Name);
 
@@ -35,7 +58,7 @@ namespace FileUpdater.Model {
 				BaseFile dest = new BaseFile(destinationPath);
 				if (!dest.FileInfo.Exists) {
 					//TODO: here must be notification message
-					throw new FileNotFoundException("Destination file did not find");
+					throw new FileNotFoundException("Destination file does not find");
 				}
 				destinations[destinations.Length] = dest;
 			}
@@ -44,7 +67,7 @@ namespace FileUpdater.Model {
 		private void RegisterPaths(BaseFile sourceFile, BaseFile destinationFile = null) {
 			if (!sourceFile.FileInfo.Exists) {
 				//TODO: here must be notification message
-				throw new FileNotFoundException("Source file did not find");
+				throw new FileNotFoundException("Source file does not find");
 			}
 			source = sourceFile;
 			CreateWatcher(source.FileInfo.DirectoryName, source.FileInfo.Name);
@@ -52,7 +75,7 @@ namespace FileUpdater.Model {
 			if (destinationFile != null) {
 				if (!destinationFile.FileInfo.Exists) {
 					//TODO: here must be notification message
-					throw new FileNotFoundException("Source file did not find");
+					throw new FileNotFoundException("Source file does not find");
 				}
 				destinations[destinations.Length] = destinationFile;
 			}
