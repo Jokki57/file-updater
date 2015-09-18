@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using FileUpdater.Events;
 
 namespace FileUpdater.View {
 	/// <summary>
@@ -21,7 +22,9 @@ namespace FileUpdater.View {
 		private bool selected;
 		private int key;
 
-		public bool Selected { get { return (bool)SelectCheckBox.IsChecked; } }
+        public event EventHandler<KeyChangedEventArgs> KeyChanged;
+
+		public bool IsSelected { get { return (bool)SelectCheckBox.IsChecked; } }
 		public int Key {
 			set {
 				key = value;
@@ -42,10 +45,20 @@ namespace FileUpdater.View {
 		}
 
 		public SourceField() {
-			InitializeComponent();			
+			InitializeComponent();
+
+            KeyField.TextChanged += KeyField_TextChanged;	
 		}
 
-		public SourceField(int key, string path) : this() {
+        private void KeyField_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (KeyChanged != null)
+            {
+                KeyChanged(this, new KeyChangedEventArgs(key, int.Parse(KeyField.Text)));
+            }
+        }
+
+        public SourceField(int key, string path) : this() {
 			Key = key;
 			Path = path;
 		}

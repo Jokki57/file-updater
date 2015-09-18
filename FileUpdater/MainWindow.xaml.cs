@@ -14,6 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using FileUpdater.Model;
 using FileUpdater.View;
+using FileUpdater.Events;
 
 namespace FileUpdater {
 	/// <summary>
@@ -25,6 +26,10 @@ namespace FileUpdater {
 		private List<DestinationField> dests;
 		//'key' collection using for generating keys automatically
 		private SortedSet<int> keys;
+
+        public event EventHandler SourceDeleted;
+        public event EventHandler SourceAdded;
+        public event EventHandler<KeyChangedEventArgs> SourceKeyChanged;
 
 		public MainWindow() {
 			InitializeComponent();
@@ -42,15 +47,31 @@ namespace FileUpdater {
 		}
 
 		void RemoveDestBtn_Click(object sender, RoutedEventArgs e) {
-			throw new NotImplementedException();
-		}
+            foreach (DestinationField destField in dests)
+            {
+                if (destField.IsSelected)
+                {
+                    mainController.RemoveDestinationFromSource(destField.sourceField.Path, destField.Path);
+                    SourceAdded -= destField.OnSourceAdded;
+                    SourceDeleted -= destField.OnSourceDeleted;
+                }
+            }
+        }
 
 		void AddDestBtn_Click(object sender, RoutedEventArgs e) {
 			throw new NotImplementedException();
 		}
 
 		void RemoveSourceBtn_Click(object sender, RoutedEventArgs e) {
-			throw new NotImplementedException();
+			foreach (SourceField sourceField in sources.Values) {
+				if (sourceField.IsSelected) {
+                    mainController.RemoveSource(sourceField.Path);
+                    if (SourceDeleted != null)
+                    {
+                        SourceDeleted(sourceField, new EventArgs());
+                    }
+				}
+			}
 		}
 
 		void AddSourceBtn_Click(object sender, RoutedEventArgs e) {
@@ -63,12 +84,25 @@ namespace FileUpdater {
 				if (sources.Count != 0) {
 					key = keys.Max;
 					keys.Add(++key);
-					sources.Add(key, newSource);
 				}
-				newSource.Key = key;
+                sources.Add(key, newSource);
+                newSource.Key = key;
 				newSource.Path = openFile.FileName;
-				SourceStack.Children.Add(newSource);				
+                newSource.KeyChanged += OnSourceKeyChanged;
+                SourceStack.Children.Add(newSource);
+                if (SourceAdded != null)
+                {
+                    SourceAdded(newSource, new EventArgs());
+                }			
 			}
 		}
-	}
+
+        private void OnSourceKeyChanged(object sender, KeyChangedEventArgs args)
+        {
+            if (SourceKeyChanged != null)
+            {
+                SourceKeyChanged(sender, args);
+            }
+        }
+    }
 }

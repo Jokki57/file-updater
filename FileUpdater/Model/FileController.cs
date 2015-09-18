@@ -9,7 +9,7 @@ namespace FileUpdater.Model {
 	public class FileController {
 		private const string SOURCE_ERROR = "Source file does not exist";
 
-		private BaseFile[] destinations;
+		private Dictionary<string, BaseFile> destinations = new Dictionary<string, BaseFile>();
 		private BaseFile source;
 		private FileSystemWatcher watcher;
 
@@ -35,7 +35,7 @@ namespace FileUpdater.Model {
 				//TODO: here must be notification message
 				throw new FileNotFoundException("Destination file does not find");
 			}
-			destinations[destinations.Length] = dest;
+			destinations.Add(destinationPath, dest);
 		}
 
 		internal void AddDestionationFile(BaseFile destinationFile) {
@@ -43,8 +43,20 @@ namespace FileUpdater.Model {
 				//TODO: here must be notification message
 				throw new FileNotFoundException("Destination file does not find");
 			}
-			destinations[destinations.Length] = destinationFile;
+			destinations.Add(destinationFile.Path, destinationFile);
 		}
+
+        internal void RemoveDestinationFile(string destination)
+        {
+            destinations.Remove(destination);
+        }
+
+        internal void Dispose()
+        {
+            watcher.Changed -= watcher_Changed;
+            watcher.Dispose();
+           
+        }
 
 		private void RegisterSource(string sourcePath, string destinationPath = "") {
 			source = new BaseFile(sourcePath);
@@ -60,7 +72,7 @@ namespace FileUpdater.Model {
 					//TODO: here must be notification message
 					throw new FileNotFoundException("Destination file does not find");
 				}
-				destinations[destinations.Length] = dest;
+				destinations.Add(destinationPath, dest);
 			}
 		}
 
@@ -77,7 +89,7 @@ namespace FileUpdater.Model {
 					//TODO: here must be notification message
 					throw new FileNotFoundException("Source file does not find");
 				}
-				destinations[destinations.Length] = destinationFile;
+				destinations.Add(destinationFile.Path, destinationFile);
 			}
 		}
 
@@ -92,13 +104,12 @@ namespace FileUpdater.Model {
 		}
 
 		void watcher_Changed(object sender, FileSystemEventArgs e) {
-			for (int i = 0, l = destinations.Length; i < l; i++) {
-				try {
-					File.Copy(source.FileInfo.FullName, destinations[i].FileInfo.FullName, true);
-				} catch (Exception exc) {
-					//TODO: notify user abdout this exception
-				}
+			try {
+				File.Copy(source.FileInfo.FullName, destinations[e.FullPath].FileInfo.FullName, true);
+			} catch (Exception exc) {
+				//TODO: notify user abdout this exception
 			}
+			
 		}
 	}
 }

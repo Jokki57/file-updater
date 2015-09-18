@@ -7,30 +7,28 @@ using System.IO;
 
 namespace FileUpdater.Model {
 	public class MainController {
-		private List<FileController> controllers;
+		private Dictionary<string, FileController> controllersDict;
+        private List<FileController> controllers;
 
 		public List<FileController> Controllers { get { return controllers; } }
 
 		public MainController() {
 			controllers = new List<FileController>();
+            controllersDict = new Dictionary<string, FileController>();
 		}
 
 		public void AddController(string source) {
 			try {
 				FileController controller = new FileController(source);
+                controllers.Add(controller);
+                controllersDict.Add(source, controller);
 			} catch (FileNotFoundException exc) {
 				//TODO: here must be notification message
 			}
 		}
 
 		public void AddDestinationToSource(string source, string destination) {
-			FileController controller = null;
-			for (int i = 0, l = controllers.Count; i < l; i++) {
-				if (controllers[i].SourceFileInfo.FullName.Equals(source)) {
-					controller = controllers[i];
-					break;
-				}
-			}
+			FileController controller = controllersDict[source];
 			if (controller != null) {
 				try {
 					controller.AddDestionationFile(destination);
@@ -41,5 +39,19 @@ namespace FileUpdater.Model {
 				//TODO: notify that such sourche does not exist
 			}
 		}
+
+        public void RemoveSource(string source)
+        {
+            FileController controller = controllersDict[source];
+            controller.Dispose();
+            controllers.Remove(controller);
+            controllersDict.Remove(source);
+        }
+
+        public void RemoveDestinationFromSource(string source, string destination)
+        {
+            FileController controller = controllersDict[source];
+            controller.RemoveDestinationFile(destination);
+        }
 	}
 }
