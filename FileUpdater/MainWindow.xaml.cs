@@ -25,7 +25,7 @@ namespace FileUpdater {
 		private Dictionary<int, SourceField> sources;
 		private List<DestinationField> dests;
 		//'key' collection using for generating keys automatically
-		private SortedSet<int> keys;
+		private List<int> keys;
 
         public event EventHandler SourceDeleted;
         public event EventHandler SourceAdded;
@@ -34,7 +34,7 @@ namespace FileUpdater {
 		public MainWindow() {
 			InitializeComponent();
 
-			keys = new SortedSet<int>();
+			keys = new List<int>();
 
 			mainController = new MainController();
 			sources = new Dictionary<int, SourceField>();
@@ -54,18 +54,37 @@ namespace FileUpdater {
                     mainController.RemoveDestinationFromSource(destField.sourceField.Path, destField.Path);
                     SourceAdded -= destField.OnSourceAdded;
                     SourceDeleted -= destField.OnSourceDeleted;
+                    SourceKeyChanged -= destField.OnSourceKeyChange;
                 }
             }
         }
 
-		void AddDestBtn_Click(object sender, RoutedEventArgs e) {
-			throw new NotImplementedException();
-		}
+        void AddDestBtn_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Forms.OpenFileDialog openFile = new System.Windows.Forms.OpenFileDialog();
+            if (openFile.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                DestinationField destField = new DestinationField();
+                destField.Path = openFile.FileName;
+                destField.Keys = keys;
+                SourceAdded += destField.OnSourceAdded;
+                SourceDeleted += destField.OnSourceDeleted;
+                SourceKeyChanged += destField.OnSourceKeyChange;
+                DestStack.Children.Add(destField);
+                destField.KeyChanged += DestField_KeyChanged;
+            }
+        }
 
-		void RemoveSourceBtn_Click(object sender, RoutedEventArgs e) {
+        private void DestField_KeyChanged(object sender, EventArgs e)
+        {
+            mainController.AddDestinationToSource(sources[((DestinationField)sender).Key].Path, ((DestinationField)sender).Path);
+        }
+
+        void RemoveSourceBtn_Click(object sender, RoutedEventArgs e) {
 			foreach (SourceField sourceField in sources.Values) {
 				if (sourceField.IsSelected) {
                     mainController.RemoveSource(sourceField.Path);
+                    sources.Remove(sourceField.Key);
                     if (SourceDeleted != null)
                     {
                         SourceDeleted(sourceField, new EventArgs());
@@ -82,9 +101,16 @@ namespace FileUpdater {
 				int key = 0;
 				SourceField newSource = new SourceField();
 				if (sources.Count != 0) {
-					key = keys.Max;
+                    key = keys[keys.Count - 1];
+                    while (keys.IndexOf(key) != -1)
+                    {
+                        key++;
+                    }
 					keys.Add(++key);
-				}
+				} else
+                {
+                    keys.Add(key);
+                }
                 sources.Add(key, newSource);
                 newSource.Key = key;
 				newSource.Path = openFile.FileName;

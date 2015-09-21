@@ -72,6 +72,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Events\KeyChangedEventArgs.cs" />
     <Compile Include="Model\BaseFile.cs" />
     <Compile Include="Model\FileController.cs" />
     <Compile Include="View\DestinationField.xaml.cs">

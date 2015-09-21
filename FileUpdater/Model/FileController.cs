@@ -96,6 +96,7 @@ namespace FileUpdater.Model {
 		private void CreateWatcher(string directoryPath, string fileName) {
 			if (watcher == null) {
 				watcher = new FileSystemWatcher(directoryPath, fileName);
+                watcher.EnableRaisingEvents = true;
 				watcher.Changed += watcher_Changed;
 			} else {
 				watcher.Path = directoryPath;
@@ -105,7 +106,10 @@ namespace FileUpdater.Model {
 
 		void watcher_Changed(object sender, FileSystemEventArgs e) {
 			try {
-				File.Copy(source.FileInfo.FullName, destinations[e.FullPath].FileInfo.FullName, true);
+                foreach (BaseFile dest in destinations.Values)
+                {
+                    File.Copy(source.FileInfo.FullName, dest.FileInfo.FullName, true);
+                }
 			} catch (Exception exc) {
 				//TODO: notify user abdout this exception
 			}

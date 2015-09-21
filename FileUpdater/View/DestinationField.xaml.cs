@@ -19,13 +19,30 @@ namespace FileUpdater.View {
 	/// Interaction logic for DestinationField.xaml
 	/// </summary>
 	public partial class DestinationField : UserControl {
-        private List<int> keys = new List<int>();
+        private List<int> keys;
 
-        public int[] Keys { get { return keys.ToArray(); } }
+        public event EventHandler KeyChanged;
 
+        public List<int> Keys
+        {
+            get { return keys; }
+            set
+            {
+                keys = value;
+                for (int i = 0, l = KeysComboBox.Items.Count; i < l; i++)
+                {
+                    KeysComboBox.Items.RemoveAt(i);
+                }
+                for (int i = 0, l = keys.Count; i < l; i++)
+                {
+                    KeysComboBox.Items.Add(keys[i]);
+                }
+            }
+
+        }
         public SourceField sourceField { get; set; }
-
         public bool IsSelected { get { return (bool)SelectCheckBox.IsChecked; } }
+        public int Key { get { return (int)KeysComboBox.SelectedItem; } }
 
         public string Path
         {
@@ -43,15 +60,6 @@ namespace FileUpdater.View {
 			InitializeComponent();
             
 		}
-
-        public void AddKey(int key)
-        {
-            if (keys.IndexOf(key) == -1)
-            {
-                keys.Add(key);
-                KeysComboBox.Items.Add(key);
-            }
-        }
 
         public void OnSourceDeleted(object sender, EventArgs args)
         {
@@ -75,15 +83,24 @@ namespace FileUpdater.View {
             }
         }
 
-        public void OnSourceKeyChange(object sender, EventArgs args)
+        public void OnSourceKeyChange(object sender, KeyChangedEventArgs args)
         {
             SourceField sourceField;
             if (sender is SourceField)
             {
                 sourceField = sender as SourceField;
-                keys[keys.IndexOf(sourceField.Key)] = 
+                keys[keys.IndexOf(args.OldKey)] = args.NewKey;
+                KeysComboBox.Items.Remove(args.OldKey);
+                KeysComboBox.Items.Add(args.NewKey);
             }
+        }
 
-		
-	}
+        private void KeysComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (KeyChanged != null)
+            {
+                KeyChanged(this, e);
+            }
+        }
+    }
 }
